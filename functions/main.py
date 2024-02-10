@@ -10,10 +10,10 @@ app = initialize_app()
 @https_fn.on_request()
 def Update(request):
     firestore_client: google.cloud.firestore.Client = firestore.client()
-    userdata = []
+    userdata = {"users" : []}
     userdatum = firestore_client.collection("userdata").stream()
     for datum in userdatum:
-        userdata.append(datum.to_dict())
+        userdata['users'].append(datum.to_dict())
 
     return json.dumps(userdata)
 
@@ -56,6 +56,7 @@ def UserRegist(request):
         )
     except:
         userdata.append(data)
+        index = userdata.index(data)
     # レスポンスを返す
     try:
         firestore_client.collection("userdata").document(data['id']).update(userdata[index])
@@ -70,10 +71,12 @@ def UserJoin(request):
     reqjson = request.get_json()
 
     firestore_client: google.cloud.firestore.Client = firestore.client()
-    userdata = []
+    userdata = {"users":[]}
     userdatum = firestore_client.collection("userdata").stream()
+    
     for datum in userdatum:
-        userdata.append(datum.to_dict())
+        print(datum._data)
+        userdata['users'].append(datum._data)
 
     # JSONをPythonの辞書に変換
     data = {
@@ -81,18 +84,8 @@ def UserJoin(request):
         "entryTime" : format(datetime.now(),'%Y%m%d%H%M%S'),
     }
 
-    index = -1
-    for i in userdata:
-        if (i['id'] == reqjson['id']):
-            index = userdata.index(i)
-    try:
-        userdata[index].update(
-            entryTime=data['entryTime'],
-            )
-    except:
-        userdata.append(data)
     # レスポンスを返す
-    firestore_client.collection("userdata").document(data['id']).update(userdata[index])
+    firestore_client.collection("userdata").document(data['id']).update(data)
     return json.dumps(userdata)
 
 @https_fn.on_request()
@@ -121,16 +114,17 @@ def UserLeave(request):
     # JSONをPythonの辞書に変換
     data = {
         "id"  : reqjson['id'],
-        "totalTime": totalTime
+        "totalTime": totalTime,
+        "entryTime" : ""
     }
 
-    try:
-        userdata[index].update(
-            totalTime = totalTime,
-            entryTime = ""
-        )
-    except:
-        userdata.append(data)
+    #try:
+    #    userdata[index].update(
+    #        totalTime = totalTime,
+    #        entryTime = ""
+    #    )
+    #except:
+    #    userdata.append(data)
     # レスポンスを返す
     firestore_client.collection("userdata").document(data['id']).update(data)
     return "OK"
