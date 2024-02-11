@@ -104,7 +104,10 @@ def UserLeave(request):
         if (i['id'] == reqjson['id']):
             index = userdata.index(i)
     
-    JoinTime = datetime.strptime(userdata[index]['entryTime'], '%Y%m%d%H%M%S')
+    try:
+        JoinTime = datetime.strptime(userdata[index]['entryTime'], '%Y%m%d%H%M%S')
+    except:
+        JoinTime = datetime.now()
     time = datetime.now() - JoinTime
     try:
         totalTime = format(datetime.strptime(userdata[index]['totalTime'], '%H%M%S') + time, '%H%M%S')
@@ -117,14 +120,6 @@ def UserLeave(request):
         "totalTime": totalTime,
         "entryTime" : ""
     }
-
-    #try:
-    #    userdata[index].update(
-    #        totalTime = totalTime,
-    #        entryTime = ""
-    #    )
-    #except:
-    #    userdata.append(data)
     # レスポンスを返す
     firestore_client.collection("userdata").document(data['id']).update(data)
     return "OK"
